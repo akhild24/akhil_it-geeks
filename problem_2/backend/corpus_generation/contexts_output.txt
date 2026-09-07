@@ -1,0 +1,87 @@
+
+=============================
+Context for Answer ID 257
+=============================
+[237] Aditya: Rank drop hone ka darr hai bas.
+[238] Rohan: haan same
+[239] Neha: Discord link bhej do fir se?
+[240] Simran: my mom praised my bua ki beti for making round rotis like wtf???
+[241] Neha: Mujhe server nahi mil raha...
+[242] Akhil: Canteen works. Sockets bhi hai phone and laptop charge ke liye.
+[243] Rohan: haan
+[244] Meera: Waise gaming cafe jana hai toh per head ₹120 lagenge.
+[245] Akhil: Bhai tera philosophical mode usually 2 AM pe boot hota hai na?
+[246] Aditya: High ping is just the universe telling us to slow down and observe.
+[247] Kunal: 💀💀
+[248] Priya: Ignore them Neha. Relatives always bring up nonsense when they have nothing else to talk about. Focus on summer internship prep.
+[249] Rohan: lol classic aditya
+[250] Rohan: lol
+[251] Priya: We don't need a paid bot, standard voice channels work fine.
+[252] Neha: Aditya pls not now 😭
+[253] Simran: gn guysss sleep tight ✨😴
+[254] Simran: Omgggg Valo night!! 🎉🎉🎉
+[255] Rohan: haan done
+[256] Meera: Good, unnecessary expense saved.
+[257] Neha: Thank God! Lock kar lo ye plan.
+[258] Akhil: Unko bol dena study group session for machine learning project
+[259] Meera: Cab mai book kar dungi subah 10 baje, fare 40 per head split aayega.
+[260] Akhil: Aditya bhai tera text syntax corrupt ho gaya hai, restart mar le
+[261] Neha: Like literally 12:30 AM pe kaun lecture deta hai??
+
+=============================
+Context for Answer ID 3764
+=============================
+[3744] Neha: Trip budget is getting stupid now.
+[3745] Meera: Train is cheaper than bus.
+[3746] Akhil: overnight train is fine
+[3747] Kunal: 3AC then?
+[3748] Rohan: sleeper is cheaper
+[3749] Simran: I don't mind 3AC
+[3750] Priya: What is everyone's max?
+[3751] Neha: under 5k
+[3752] Akhil: 5k max
+[3753] Meera: I can do 5.5
+[3754] Kunal: same
+[3755] Priya: Let's keep it below 5.
+[3756] Aditya: Financial restraint is a temporary illusion.
+[3757] Meera: 3AC + shared room can fit.
+[3758] Rohan: okay
+[3759] Simran: works
+[3760] Akhil: calculate once
+[3761] Priya: roughly 4.8k each
+[3762] Neha: okay
+[3763] Kunal: approved
+[3764] Meera: Final then: 3AC + shared room.
+[3765] Priya: LOCKED.
+[3766] Meera: Yeh woolens sabke paas hain na? Wahan raat ko kaafi thand hoti hai.
+[3767] Neha: Main aur Simran ek cab me aa sakte hain
+[3768] Kunal: Subah ya shaam, Simran late hi aayegi.
+
+=============================
+Context for Answer ID 4304
+=============================
+[4284] Simran: omggg 😭
+[4285] Neha: notes drive pe hain
+[4286] Akhil: PR bana do main review karunga
+[4287] Neha: notes drive pe hain
+[4288] Aditya: A temporary solution becomes permanent surprisingly fast.
+[4289] Simran: mujhe bhi add karna
+[4290] Akhil: PR bana do main review karunga
+[4291] Simran: omggg 😭
+[4292] Meera: ₹200 each, split kar lena
+[4293] Neha: sent
+[4294] Neha: sent
+[4295] Akhil: server phir se slow hai
+[4296] Kunal: haan
+[4297] Akhil: We need owners for the presentation.
+[4298] Neha: I can do slides.
+[4299] Simran: I can design.
+[4300] Rohan: I'll rehearse.
+[4301] Meera: Who checks facts?
+[4302] Priya: I'll review the final deck.
+[4303] Meera: I'll update the sheet
+[4304] Kunal: I'll do speaker notes.
+[4305] Aditya: I shall contribute philosophical punctuation.
+[4306] Akhil: No philosophy please 😂
+[4307] Neha: 12 or 15 slides?
+[4308] Priya: 12 max.

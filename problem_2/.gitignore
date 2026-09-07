@@ -1,0 +1,17 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+.env
+
+# Data and Indexes
+data/*
+!data/.gitkeep
+!data/chat_corpus.json
+!data/chat_corpus_2.json
+!data/evaluation/
+data/indexes/
+# Node
+node_modules/
+dist/
+.DS_Store
