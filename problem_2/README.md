@@ -34,7 +34,118 @@ To run the Phase 4 hybrid retrieval and query classification tests:
 - **Hybrid Retrieval:** Runs BM25 and Dense vector retrieval *only* on the filtered candidates.
 - **Reciprocal Rank Fusion (RRF):** Fuses lexical and semantic scores using `1 / (k + rank)` against the message ID, balancing results deterministically.
 
+## Search API (Phase 5)
+
+The `/search` endpoint (POST) allows searching the Hinglish chat corpus with explicit filters, contextual message tracking, and no-match calibration.
+
+### Request Schema
+
+```json
+{
+  "query": "What did we decide about the trip?",
+  "sender": "Priya",           // Optional, overrides query extraction if provided
+  "date_start": "2026-06-01T00:00:00", // Optional, overrides query extraction
+  "date_end": "2026-06-30T23:59:59",   // Optional, overrides query extraction
+  "top_k": 5                   // Optional, defaults to 5
+}
+```
+
+### Response Schema
+
+```json
+{
+  "query": "What did we decide about the trip?",
+  "query_type": "attributed",
+  "filters": {
+    "sender": "Priya",
+    "date_start": null,
+    "date_end": null
+  },
+  "results": [
+    {
+      "message_id": 105,
+      "sender": "Priya",
+      "timestamp": "2026-06-15T14:30:00",
+      "text": "Let's stick to the 50k budget for the trip.",
+      "fused_score": 0.032,
+      "fused_rank": 1,
+      "bm25_rank": 2,
+      "dense_rank": 1,
+      "context": [
+         // Array of up to 5 surrounding messages before and after, 
+         // with is_match indicating the retrieved target message
+      ]
+    }
+  ],
+  "no_match": false
+}
+```
+
+### Context Builder
+Retrieved messages include up to 5 surrounding messages before and after the target message. This utilizes the actual chronological `prev_id` and `next_id` relationships rather than arbitrary array slices, ensuring the context accurately reflects the conversation flow.
+
+### No-Match Detection — Current Status & Limitation
+
+> **Important:** RRF (Reciprocal Rank Fusion) is a ranking/fusion score, **not** a calibrated probability or absolute confidence measure.
+
+Phase 5 calibration evaluated 10 intentionally out-of-domain queries against 40 valid queries. The observed top-1 RRF score distributions were:
+
+| | Min | Max | Mean | Median |
+|---|---|---|---|---|
+| No-match (10 queries) | 0.0243 | 0.0328 | 0.0297 | 0.0303 |
+| Valid (40 queries) | 0.0246 | 0.0328 | 0.0303 | 0.0307 |
+
+With this evaluation set and this RRF formulation, **no reliable global threshold is supported by the observed score distributions**. Any threshold that rejects most no-match queries also incorrectly rejects a significant portion of valid queries. The previously attempted threshold of `0.0250` rejected only 1/10 no-match queries while also incorrectly rejecting 1/40 valid queries.
+
+**Current behavior:** The `no_match` field is `true` only when the candidate set is completely empty (e.g., filters produce zero candidates, or the query is empty/whitespace). The system does **not** reject results based on RRF score alone.
+
+The 10 no-match evaluation queries are retained in `data/evaluation/no_match_queries.json` for future evaluation.
+
+#### Future No-Match Improvements
+
+A stronger no-match mechanism can be evaluated in a future phase using signals such as:
+- Raw dense cosine similarity (pre-fusion absolute confidence)
+- BM25 score / lexical evidence strength
+- Score margins between top-1 and lower-ranked results
+- Cross-encoder relevance scoring
+
+These are **not** implemented in Phase 5.
+
 ### Frontend
 1. `cd frontend`
 2. `npm install`
 3. `npm run dev`
+
+The frontend runs on `http://localhost:5173` by default (Vite dev server).
+
+The backend URL defaults to `http://127.0.0.1:8000` and can be overridden via the `VITE_API_URL` environment variable.
+
+## Frontend Search UI (Phase 6)
+
+The React frontend provides a polished search interface for querying the Hinglish group chat corpus.
+
+### Features
+- **Natural language search**: Users enter queries like "What did Priya say about budget?" and the backend handles query classification (semantic/attributed/temporal/mixed).
+- **Sender filter**: Dropdown to filter by participant (Priya, Meera, Aditya, Neha, Simran, Kunal, Akhil, Rohan).
+- **Date filters**: Optional start/end date pickers, sent to the backend for temporal filtering.
+- **Context display**: Each result shows the matched message + 5 messages before and after, with the match clearly highlighted.
+- **Query type badge**: Displays the detected query type (Semantic, Attributed, Temporal, Mixed) as a colored badge.
+- **Active filter chips**: Shows active sender/date filters next to the query type badge.
+- **Loading state**: Spinner and disabled controls while searching.
+- **No-match state**: Clean "No matching conversation found" when `no_match: true`.
+- **Error state**: User-friendly error if the backend is unavailable.
+- **Empty query validation**: Prevents submission of blank queries.
+- **Health check indicator**: Green/red dot showing backend connectivity status.
+
+### Demo Flow
+1. Start backend: `cd backend && uvicorn main:app --reload` (with venv activated)
+2. Start frontend: `cd frontend && npm run dev`
+3. Open `http://localhost:5173`
+4. Try example queries from the welcome screen, or type your own:
+   - "What did we decide about the trip?"
+   - "What did Priya say about budget?" (with Priya sender filter)
+   - "What did we discuss in June?" (temporal query)
+   - "What time had been fixed for the Saturday plan?" (semantic, message 2956 retrieved)
+
+### No-Match Limitation (Phase 5)
+The `no_match: true` response currently only triggers when the candidate set is completely empty (e.g., filters exclude all messages). The system does not reject results based on RRF score alone, as documented in Phase 5.

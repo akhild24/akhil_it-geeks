@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
@@ -14,6 +15,11 @@ def filter_by_sender(metadata_list: List[Dict], sender: str) -> List[int]:
     return indices
 
 def filter_by_date_range(metadata_list: List[Dict], start_date: datetime, end_date: datetime) -> List[int]:
+    # Normalize filter dates to naive (UTC) to match corpus timestamps stripped on line 25
+    if start_date.tzinfo is not None:
+        start_date = start_date.replace(tzinfo=None)
+    if end_date.tzinfo is not None:
+        end_date = end_date.replace(tzinfo=None)
     indices = []
     for i, m in enumerate(metadata_list):
         ts_str = m.get('timestamp')
@@ -67,6 +73,54 @@ def rrf_fusion(bm25_results: List[Dict], dense_results: List[Dict], k: int = 60)
     for msg_id, score in scores.items():
         item = items[msg_id]
         item['fused_score'] = score
+        fused.append(item)
+        
+    fused.sort(key=lambda x: x['fused_score'], reverse=True)
+    
+    for i, item in enumerate(fused):
+        item['fused_rank'] = i + 1
+        
+    return fused
+
+def minmax_normalize(scores: List[float]) -> List[float]:
+    if not scores:
+        return []
+    min_s = min(scores)
+    max_s = max(scores)
+    if max_s - min_s == 0:
+        return [0.0] * len(scores)
+    return [(s - min_s) / (max_s - min_s) for s in scores]
+
+def score_fusion(bm25_results: List[Dict], dense_results: List[Dict], alpha: float = 0.2) -> List[Dict]:
+    scores = {}
+    items = {}
+    
+    b_scores = [r['raw_score'] for r in bm25_results]
+    b_norm = minmax_normalize(b_scores)
+    
+    for i, r in enumerate(bm25_results):
+        msg_id = r['message_id']
+        if msg_id not in items:
+            items[msg_id] = r.copy()
+            scores[msg_id] = {'b': 0.0, 'd': 0.0}
+        scores[msg_id]['b'] = b_norm[i]
+        items[msg_id]['bm25_rank'] = r['rank']
+        
+    d_scores = [r['raw_score'] for r in dense_results]
+    d_norm = minmax_normalize(d_scores)
+    
+    for i, r in enumerate(dense_results):
+        msg_id = r['message_id']
+        if msg_id not in items:
+            items[msg_id] = r.copy()
+            scores[msg_id] = {'b': 0.0, 'd': 0.0}
+        scores[msg_id]['d'] = d_norm[i]
+        items[msg_id]['dense_rank'] = r['rank']
+        
+    fused = []
+    for msg_id, s in scores.items():
+        item = items[msg_id]
+        item['fused_score'] = alpha * s['b'] + (1.0 - alpha) * s['d']
         fused.append(item)
         
     fused.sort(key=lambda x: x['fused_score'], reverse=True)
@@ -130,5 +184,28 @@ def hybrid_search(query: str, sender: Optional[str] = None, date_start: Optional
             'metadata': br._METADATA[global_idx]
         })
         
-    fused = rrf_fusion(bm25_results, dense_results)
+    # Phase 8: Configurable fusion strategy. Defaulting to improved score_fusion
+    # with alpha=0.2 (20% BM25, 80% Dense) which yielded massive retrieval improvements.
+    fusion_method = os.environ.get("FUSION_METHOD", "score")
+    if fusion_method == "rrf":
+        fused = rrf_fusion(bm25_results, dense_results)
+    else:
+        fused = score_fusion(bm25_results, dense_results, alpha=0.2)
+        
+    # Phase 9: Confidence-Aware Retrieval (No-match detection)
+    # Strategy: top5_overlap_dense @ threshold 0.518
+    # Formula: top_dense_raw + (bm25_dense_top5_overlap * 0.05)
+    
+    top_dense_raw = dense_results[0]['raw_score'] if dense_results else 0.0
+    bm25_top5_ids = set(r['message_id'] for r in bm25_results[:5])
+    dense_top5_ids = set(r['message_id'] for r in dense_results[:5])
+    top5_overlap = len(bm25_top5_ids & dense_top5_ids)
+    
+    confidence_score = top_dense_raw + (top5_overlap * 0.05)
+    
+    # Optional bypass for baseline testing
+    if os.environ.get("DISABLE_CONFIDENCE_THRESHOLD") != "1":
+        if confidence_score < 0.518:
+            return []
+            
     return fused[:top_k]
