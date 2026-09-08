@@ -14,6 +14,33 @@ A search engine for WhatsApp-style Hinglish group chats built using Hybrid Searc
 
 ## Setup Instructions
 
+### Prerequisites
+- Python 3.10+ with `pip`
+- Node.js 18+ with `npm`
+
+### Run the Application
+From the repository root, use two terminals:
+
+**Terminal 1: backend**
+```powershell
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python -m backend.indexing.build_indexes
+cd backend
+uvicorn main:app --reload
+```
+
+**Terminal 2: frontend**
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. The frontend calls the backend at
+`http://127.0.0.1:8000` by default; set `VITE_API_URL` to use another backend URL.
+
 ### Backend
 1. `python -m venv venv`
 2. Activate environment: `venv\Scripts\activate` (Windows) or `source venv/bin/activate` (Mac/Linux)
@@ -98,6 +125,12 @@ RRF is a ranking signal rather than an absolute confidence score, so the API use
 The frontend runs on `http://localhost:5173` by default (Vite dev server).
 
 The backend URL defaults to `http://127.0.0.1:8000` and can be overridden via the `VITE_API_URL` environment variable.
+
+## Mocked and Local Components
+- **Chat data:** The repository uses a checked-in synthetic Hinglish corpus in `data/chat_corpus_2.json`; it is not connected to live WhatsApp or other chat ingestion.
+- **Persistence and search infrastructure:** Embeddings and metadata are loaded from local files in `data/indexes/`, and BM25 search runs in-process. There is no MongoDB, hosted vector database, or external search service.
+- **Query classification:** Sender and temporal extraction are deterministic local logic. The Gemini API fallback described in the PRD is not wired into the running application.
+- **Frontend API:** The frontend uses the real local FastAPI `/search` and `/health` endpoints; responses are not mocked in the UI.
 
 ## Frontend Search UI (Phase 6)
 
