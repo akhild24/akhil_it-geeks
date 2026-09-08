@@ -447,6 +447,13 @@
   line-height: 1.55;
 }
 
+mark {
+  color: inherit;
+  background: rgba(251, 191, 36, 0.28);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
 /* Context toggle */
 .context-toggle {
   display: flex;

@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
+import re
 from datetime import datetime
 
 from backend.query_classification.classifier import classify_query
@@ -44,6 +45,7 @@ class SearchResult(BaseModel):
     fused_rank: int
     bm25_rank: Optional[int] = None
     dense_rank: Optional[int] = None
+    highlight_terms: List[str] = []
     context: List[ContextMessage]
 
 class FilterMetadata(BaseModel):
@@ -57,6 +59,13 @@ class SearchResponse(BaseModel):
     filters: FilterMetadata
     results: List[SearchResult]
     no_match: bool  # Currently only True if candidate set is empty, as RRF is not a reliable confidence score.
+
+
+def highlight_terms(query: str, text: str) -> List[str]:
+    """Return query terms that occur in a result without exposing HTML markup."""
+    query_terms = {term.lower() for term in re.findall(r"\w+", query) if len(term) > 1}
+    text_terms = {term.lower() for term in re.findall(r"\w+", text)}
+    return sorted(query_terms.intersection(text_terms), key=lambda term: (-len(term), term))
 
 # Phase 9: No-match detection is now handled by a confidence threshold in hybrid_search.
 # The strategy uses a combined score (top_dense_raw + top5_overlap * 0.05) to evaluate confidence.
@@ -140,6 +149,7 @@ def search_api(request: SearchRequest):
             fused_rank=r['fused_rank'],
             bm25_rank=r.get('bm25_rank'),
             dense_rank=r.get('dense_rank'),
+            highlight_terms=highlight_terms(query, r['message']),
             context=context_msgs
         ))
         

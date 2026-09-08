@@ -162,7 +162,8 @@ def validate_queries(queries_filepath, corpus, valid_ids):
 
 
 if __name__ == "__main__":
-    corpus_filepath = r"c:\Users\ASUS\OneDrive\Desktop\akhil\data\chat_corpus_2.json"
-    queries_filepath = r"c:\Users\ASUS\OneDrive\Desktop\akhil\data\evaluation\test_queries_40.json"
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    corpus_filepath = os.path.join(project_root, 'data', 'chat_corpus_2.json')
+    queries_filepath = os.path.join(project_root, 'data', 'evaluation', 'test_queries_40.json')
     corpus, valid_ids = validate_corpus(corpus_filepath)
     validate_queries(queries_filepath, corpus, valid_ids)

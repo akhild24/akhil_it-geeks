@@ -28,6 +28,16 @@ function formatTime(ts) {
   }
 }
 
+function HighlightedText({ text, terms = [] }) {
+  if (!terms.length) return text;
+  const pattern = new RegExp(`(${terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+  return text.split(pattern).map((part, index) =>
+    terms.some(term => part.toLowerCase() === term.toLowerCase())
+      ? <mark key={index}>{part}</mark>
+      : part,
+  );
+}
+
 export default function ResultCard({ result, rank }) {
   const [contextOpen, setContextOpen] = useState(true);
 
@@ -44,7 +54,7 @@ export default function ResultCard({ result, rank }) {
         </span>
       </div>
 
-      <p className="result-text">{result.text}</p>
+      <p className="result-text"><HighlightedText text={result.text} terms={result.highlight_terms} /></p>
 
       {result.context && result.context.length > 0 && (
         <>
@@ -70,7 +80,9 @@ export default function ResultCard({ result, rank }) {
                     <span className="context-time">{formatTime(msg.timestamp)}</span>
                     {msg.is_match && <span className="match-label">MATCH</span>}
                   </div>
-                  <p className="context-text">{msg.text}</p>
+                  <p className="context-text">
+                    <HighlightedText text={msg.text} terms={msg.is_match ? result.highlight_terms : []} />
+                  </p>
                 </div>
               ))}
             </div>

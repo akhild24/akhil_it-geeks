@@ -84,32 +84,9 @@ The `/search` endpoint (POST) allows searching the Hinglish chat corpus with exp
 ### Context Builder
 Retrieved messages include up to 5 surrounding messages before and after the target message. This utilizes the actual chronological `prev_id` and `next_id` relationships rather than arbitrary array slices, ensuring the context accurately reflects the conversation flow.
 
-### No-Match Detection — Current Status & Limitation
+### No-Match Detection
 
-> **Important:** RRF (Reciprocal Rank Fusion) is a ranking/fusion score, **not** a calibrated probability or absolute confidence measure.
-
-Phase 5 calibration evaluated 10 intentionally out-of-domain queries against 40 valid queries. The observed top-1 RRF score distributions were:
-
-| | Min | Max | Mean | Median |
-|---|---|---|---|---|
-| No-match (10 queries) | 0.0243 | 0.0328 | 0.0297 | 0.0303 |
-| Valid (40 queries) | 0.0246 | 0.0328 | 0.0303 | 0.0307 |
-
-With this evaluation set and this RRF formulation, **no reliable global threshold is supported by the observed score distributions**. Any threshold that rejects most no-match queries also incorrectly rejects a significant portion of valid queries. The previously attempted threshold of `0.0250` rejected only 1/10 no-match queries while also incorrectly rejecting 1/40 valid queries.
-
-**Current behavior:** The `no_match` field is `true` only when the candidate set is completely empty (e.g., filters produce zero candidates, or the query is empty/whitespace). The system does **not** reject results based on RRF score alone.
-
-The 10 no-match evaluation queries are retained in `data/evaluation/no_match_queries.json` for future evaluation.
-
-#### Future No-Match Improvements
-
-A stronger no-match mechanism can be evaluated in a future phase using signals such as:
-- Raw dense cosine similarity (pre-fusion absolute confidence)
-- BM25 score / lexical evidence strength
-- Score margins between top-1 and lower-ranked results
-- Cross-encoder relevance scoring
-
-These are **not** implemented in Phase 5.
+RRF is a ranking signal rather than an absolute confidence score, so the API uses a calibrated evidence check in addition to RRF: the highest raw dense similarity plus agreement between BM25 and dense top-five candidates. An empty query, an empty filtered candidate set, or insufficient evidence returns `no_match: true` with no results. The ten out-of-domain queries live in `data/evaluation/no_match_queries.json` and can be checked with `python backend/evaluation/validate_no_match_queries.py`.
 
 ### Frontend
 1. `cd frontend`
@@ -147,5 +124,5 @@ The React frontend provides a polished search interface for querying the Hinglis
    - "What did we discuss in June?" (temporal query)
    - "What time had been fixed for the Saturday plan?" (semantic, message 2956 retrieved)
 
-### No-Match Limitation (Phase 5)
-The `no_match: true` response currently only triggers when the candidate set is completely empty (e.g., filters exclude all messages). The system does not reject results based on RRF score alone, as documented in Phase 5.
+### Retrieval Notes
+The production pipeline always combines BM25 and multilingual dense retrieval with Reciprocal Rank Fusion over each head's top 100 candidates. Match highlighting is token-based and intentionally does not fabricate lexical highlights for semantic-only matches; those remain visibly marked as the retrieved message in their context thread.

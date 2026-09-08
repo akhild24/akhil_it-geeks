@@ -14,11 +14,15 @@ def filter_by_sender(metadata_list: List[Dict], sender: str) -> List[int]:
             indices.append(i)
     return indices
 
-def filter_by_date_range(metadata_list: List[Dict], start_date: datetime, end_date: datetime) -> List[int]:
-    # Normalize filter dates to naive (UTC) to match corpus timestamps stripped on line 25
-    if start_date.tzinfo is not None:
+def filter_by_date_range(
+    metadata_list: List[Dict],
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+) -> List[int]:
+    """Return messages inside optional inclusive date bounds."""
+    if start_date and start_date.tzinfo is not None:
         start_date = start_date.replace(tzinfo=None)
-    if end_date.tzinfo is not None:
+    if end_date and end_date.tzinfo is not None:
         end_date = end_date.replace(tzinfo=None)
     indices = []
     for i, m in enumerate(metadata_list):
@@ -28,7 +32,7 @@ def filter_by_date_range(metadata_list: List[Dict], start_date: datetime, end_da
         try:
             ts = datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
             ts = ts.replace(tzinfo=None)
-            if start_date <= ts <= end_date:
+            if (start_date is None or start_date <= ts) and (end_date is None or ts <= end_date):
                 indices.append(i)
         except ValueError:
             pass
@@ -41,7 +45,7 @@ def filter_candidates(metadata_list: List[Dict], sender: Optional[str] = None, d
         sender_indices = set(filter_by_sender(metadata_list, sender))
         candidates = candidates.intersection(sender_indices)
         
-    if date_start and date_end:
+    if date_start or date_end:
         date_indices = set(filter_by_date_range(metadata_list, date_start, date_end))
         candidates = candidates.intersection(date_indices)
         
@@ -134,12 +138,12 @@ def hybrid_search(query: str, sender: Optional[str] = None, date_start: Optional
     br._ensure_dense_state()
     br._ensure_bm25_state()
     
-    # If explicit filters are not provided, try extracting them
-    if not sender and not (date_start and date_end):
-        classification = classify_query(query)
-        sender = classification.sender
-        date_start = classification.date_start
-        date_end = classification.date_end
+    # Explicit values take precedence, while omitted dimensions can still be
+    # inferred from the natural-language query.
+    classification = classify_query(query)
+    sender = sender or classification.sender
+    date_start = date_start or classification.date_start
+    date_end = date_end or classification.date_end
 
     candidate_indices = filter_candidates(br._METADATA, sender=sender, date_start=date_start, date_end=date_end)
     
@@ -184,13 +188,11 @@ def hybrid_search(query: str, sender: Optional[str] = None, date_start: Optional
             'metadata': br._METADATA[global_idx]
         })
         
-    # Phase 8: Configurable fusion strategy. Defaulting to improved score_fusion
-    # with alpha=0.2 (20% BM25, 80% Dense) which yielded massive retrieval improvements.
-    fusion_method = os.environ.get("FUSION_METHOD", "score")
-    if fusion_method == "rrf":
-        fused = rrf_fusion(bm25_results, dense_results)
-    else:
-        fused = score_fusion(bm25_results, dense_results, alpha=0.2)
+    # RRF is designed to fuse the two retrieval heads' strongest candidates.
+    # Including every message (especially the BM25 zero-score tail) gives
+    # arbitrary long-tail ranks a vote and degrades relevance.
+    fusion_depth = min(100, len(candidate_indices))
+    fused = rrf_fusion(bm25_results[:fusion_depth], dense_results[:fusion_depth])
         
     # Phase 9: Confidence-Aware Retrieval (No-match detection)
     # Strategy: top5_overlap_dense @ threshold 0.518

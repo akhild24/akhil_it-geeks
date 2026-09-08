@@ -2,8 +2,9 @@ import json
 import os
 import re
 
-CORPUS_PATH = r"c:\Users\ASUS\OneDrive\Desktop\akhil\data\chat_corpus_2.json"
-QUERIES_PATH = r"c:\Users\ASUS\OneDrive\Desktop\akhil\data\evaluation\no_match_queries.json"
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+CORPUS_PATH = os.path.join(PROJECT_ROOT, 'data', 'chat_corpus_2.json')
+QUERIES_PATH = os.path.join(PROJECT_ROOT, 'data', 'evaluation', 'no_match_queries.json')
 
 def normalize_text(text):
     text = str(text).lower()
