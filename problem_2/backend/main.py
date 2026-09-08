@@ -25,8 +25,10 @@ VALID_SENDERS = {"priya", "meera", "aditya", "neha", "simran", "kunal", "akhil",
 class SearchRequest(BaseModel):
     query: str
     sender: Optional[str] = None
+    sender_filter: Optional[str] = None
     date_start: Optional[datetime] = None
     date_end: Optional[datetime] = None
+    date_range: Optional[List[datetime]] = None
     top_k: Optional[int] = 5
 
 class ContextMessage(BaseModel):
@@ -80,22 +82,35 @@ def read_root():
 @app.post("/search", response_model=SearchResponse)
 def search_api(request: SearchRequest):
     query = request.query.strip()
+
+    if request.sender is not None and request.sender_filter is not None and request.sender.lower() != request.sender_filter.lower():
+        raise HTTPException(status_code=400, detail="sender and sender_filter must match when both are provided")
+    if request.date_range is not None and len(request.date_range) != 2:
+        raise HTTPException(status_code=400, detail="date_range must contain [start, end]")
+
+    requested_sender = request.sender or request.sender_filter
+    range_start = request.date_range[0] if request.date_range else None
+    range_end = request.date_range[1] if request.date_range else None
+    if range_start and range_end and range_start > range_end:
+        raise HTTPException(status_code=400, detail="date_range start cannot be after end")
     
     # 1. Classify query
     classification = classify_query(query)
     query_type = classification.query_type
     
     # 2. Filter Precedence (Explicit > Extracted)
-    final_sender = request.sender if request.sender is not None else classification.sender
+    final_sender = requested_sender if requested_sender is not None else classification.sender
     
-    if request.date_start and request.date_end:
-        if request.date_start > request.date_end:
+    explicit_date_start = request.date_start or range_start
+    explicit_date_end = request.date_end or range_end
+    if explicit_date_start and explicit_date_end:
+        if explicit_date_start > explicit_date_end:
             raise HTTPException(status_code=400, detail="date_start cannot be after date_end")
-        final_date_start = request.date_start
-        final_date_end = request.date_end
-    elif request.date_start or request.date_end:
-        final_date_start = request.date_start if request.date_start is not None else classification.date_start
-        final_date_end = request.date_end if request.date_end is not None else classification.date_end
+        final_date_start = explicit_date_start
+        final_date_end = explicit_date_end
+    elif explicit_date_start or explicit_date_end:
+        final_date_start = explicit_date_start if explicit_date_start is not None else classification.date_start
+        final_date_end = explicit_date_end if explicit_date_end is not None else classification.date_end
     else:
         final_date_start = classification.date_start
         final_date_end = classification.date_end

@@ -29,22 +29,22 @@ def parse_temporal_cues(query: str) -> Tuple[Optional[datetime], Optional[dateti
     }
     
     # 1. Relative phrases
-    if re.search(r'\blast month\b', query_lower):
+    if re.search(r'\b(?:last month|pichle mahine|pichhla mahina)\b', query_lower):
         # Last month relative to July 2026 is June 2026
         return datetime(2026, 6, 1), datetime(2026, 6, 30, 23, 59, 59)
-    if re.search(r'\bthis month\b', query_lower):
+    if re.search(r'\b(?:this month|iss mahine|is mahine)\b', query_lower):
         # This month is July 2026
         return datetime(2026, 7, 1), datetime(2026, 7, 31, 23, 59, 59)
-    if re.search(r'\blast week\b', query_lower):
+    if re.search(r'\b(?:last week|pichle hafte|pichhla hafta)\b', query_lower):
         # Reference is July 11 (Saturday). Last week would be 7-14 days ago.
         start = (REFERENCE_DATE - timedelta(days=14)).replace(hour=0, minute=0, second=0)
         end = (REFERENCE_DATE - timedelta(days=7)).replace(hour=23, minute=59, second=59)
         return start, end
-    if re.search(r'\bthis week\b', query_lower):
+    if re.search(r'\b(?:this week|iss hafte|is hafte)\b', query_lower):
         start = (REFERENCE_DATE - timedelta(days=6)).replace(hour=0, minute=0, second=0)
         end = REFERENCE_DATE.replace(hour=23, minute=59, second=59)
         return start, end
-    if re.search(r'\byesterday\b', query_lower):
+    if re.search(r'\b(?:yesterday|kal)\b', query_lower):
         start = (REFERENCE_DATE - timedelta(days=1)).replace(hour=0, minute=0, second=0)
         end = start.replace(hour=23, minute=59, second=59)
         return start, end

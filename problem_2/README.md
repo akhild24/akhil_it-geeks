@@ -7,7 +7,7 @@ A search engine for WhatsApp-style Hinglish group chats built using Hybrid Searc
   - `corpus_generation/`: Scripts to generate Hinglish synthetic chat data.
   - `indexing/`: Logic for dense embeddings and BM25 tokenization.
   - `retrieval/`: Hybrid search pipeline and fusion algorithms.
-  - `query_classification/`: Rule-based and LLM fallback classifiers.
+  - `query_classification/`: Deterministic sender and temporal query classification.
   - `evaluation/`: Automated evaluation pipeline on the test queries.
 - `frontend/`: React + Vite application
 - `data/`: Storage for the corpus, embeddings, and indices.
@@ -49,6 +49,8 @@ The `/search` endpoint (POST) allows searching the Hinglish chat corpus with exp
   "top_k": 5                   // Optional, defaults to 5
 }
 ```
+
+The API also accepts the PRD field names `sender_filter` and `date_range` (`[start, end]`) for compatibility with the assignment contract.
 
 ### Response Schema
 

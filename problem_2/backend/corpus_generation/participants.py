@@ -1,12 +1,12 @@
 PARTICIPANTS = [
     "Priya",
-    "Rahul",
-    "Aman",
-    "Sneha",
+    "Meera",
+    "Aditya",
+    "Simran",
     "Rohan",
-    "Kavya",
-    "Vikram",
-    "Neha"
+    "Kunal",
+    "Akhil",
+    "Neha",
 ]
 
 # Provide typing quirks for the generator to use (for local fallback and gemini)
@@ -15,15 +15,15 @@ PERSONAS = {
         "style": "uses a lot of emojis, enthusiastic, says 'haan', 'achha'",
         "quirks": ["😂", "yaar", "accha", "haan"]
     },
-    "Rahul": {
+    "Meera": {
         "style": "short messages, english mixed with hindi, says 'bro', 'chill'",
         "quirks": ["bro", "chill", "karta hu", "ok"]
     },
-    "Aman": {
+    "Aditya": {
         "style": "uses abbreviations, tyops, 'bhai', 'kl', 'nhi'",
         "quirks": ["bhai", "kl", "nhi", "kya chal rha"]
     },
-    "Sneha": {
+    "Simran": {
         "style": "asks a lot of questions, plans things, organized",
         "quirks": ["guys", "kya plan hai?", "kab?", "free ho?"]
     },
@@ -31,11 +31,11 @@ PERSONAS = {
         "style": "one word replies, a bit lazy, 'hmm', 'k'",
         "quirks": ["hmm", "k", "done", "dekhte hai"]
     },
-    "Kavya": {
+    "Kunal": {
         "style": "focuses on food and budget, sensible, uses 'toh', 'phir'",
         "quirks": ["toh", "phir", "budget kya hai", "khana"]
     },
-    "Vikram": {
+    "Akhil": {
         "style": "always late, cancels plans, uses 'sorry', 'busy'",
         "quirks": ["sorry", "busy hu", "next time", "bhai ruk"]
     },

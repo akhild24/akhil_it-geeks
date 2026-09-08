@@ -199,15 +199,36 @@ def hybrid_search(query: str, sender: Optional[str] = None, date_start: Optional
     # Formula: top_dense_raw + (bm25_dense_top5_overlap * 0.05)
     
     top_dense_raw = dense_results[0]['raw_score'] if dense_results else 0.0
+    top_bm25_raw = bm25_results[0]['raw_score'] if bm25_results else 0.0
     bm25_top5_ids = set(r['message_id'] for r in bm25_results[:5])
     dense_top5_ids = set(r['message_id'] for r in dense_results[:5])
     top5_overlap = len(bm25_top5_ids & dense_top5_ids)
     
     confidence_score = top_dense_raw + (top5_overlap * 0.05)
+    stopwords = {
+        'a', 'about', 'an', 'and', 'are', 'can', 'did', 'do', 'everyone',
+        'for', 'from', 'how', 'in', 'is', 'it', 'of', 'on', 'out', 'the',
+        'they', 'to', 'was', 'we', 'what', 'when', 'where', 'which', 'who',
+    }
+    query_terms = set(token for token in tokenized_query if token not in stopwords)
+    lexical_coverage = 0.0
+    if query_terms:
+        for result in bm25_results[:100]:
+            indexed_terms = br._TOKENIZER.tokenize(
+                result['message'] + ' ' + result['metadata'].get('search_context', '')
+            )
+            lexical_coverage = max(
+                lexical_coverage,
+                len(query_terms.intersection(indexed_terms)) / len(query_terms),
+            )
     
     # Optional bypass for baseline testing
     if os.environ.get("DISABLE_CONFIDENCE_THRESHOLD") != "1":
-        if confidence_score < 0.518:
+        # A low dense score alone is not enough to reject a valid query: short
+        # Hinglish messages can still have partial lexical evidence. Reject
+        # low-confidence candidates when the lexical evidence covers too little
+        # of the meaningful query, which filters generic-word false matches.
+        if confidence_score < 0.518 and lexical_coverage < 0.5:
             return []
             
     return fused[:top_k]

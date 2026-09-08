@@ -15,6 +15,8 @@ def validate_corpus(filepath):
     broken_links = 0
     invalid_timestamps = 0
     empty_messages = 0
+    forwarded_messages = 0
+    short_replies = 0
     
     seen_ids = set()
     
@@ -29,6 +31,10 @@ def validate_corpus(filepath):
             
         if not msg.get("text") or str(msg["text"]).strip() == "":
             empty_messages += 1
+        if "[Forwarded]" in str(msg.get("text", "")):
+            forwarded_messages += 1
+        if len(str(msg.get("text", "")).strip()) <= 5:
+            short_replies += 1
             
         senders.add(msg.get("sender"))
         
@@ -96,6 +102,8 @@ def validate_corpus(filepath):
     print(f"Broken links: {broken_links}")
     print(f"Invalid timestamps: {invalid_timestamps}")
     print(f"Empty messages: {empty_messages}")
+    print(f"Forwarded messages: {forwarded_messages}")
+    print(f"One-word/short replies: {short_replies}")
     print("-" * 25)
     print(f"Status: {status}")
     return corpus, seen_ids
@@ -118,6 +126,7 @@ def validate_queries(queries_filepath, corpus, valid_ids):
     
     seen_queries = set()
     zero_overlap_count = 0
+    query_types = set()
     
     # lookup corpus text by id
     corpus_dict = {msg["id"]: msg["text"] for msg in corpus}
@@ -144,12 +153,16 @@ def validate_queries(queries_filepath, corpus, valid_ids):
             overlap = q_tokens.intersection(a_tokens)
             if len(overlap) == 0:
                 zero_overlap_count += 1
+        query_types.add(q.get("query_type"))
                 
     status = "PASS"
     if num_queries != 40: status = f"FAIL (Expected 40 queries, got {num_queries})"
     if empty_queries > 0: status = "FAIL (Empty queries found)"
     if invalid_answer_ids > 0: status = "FAIL (Invalid answer IDs)"
+    if duplicates > 0: status = "FAIL (Duplicate queries found)"
     if zero_overlap_count < 8: status = f"FAIL (Zero overlap count < 8: {zero_overlap_count})"
+    if not {"semantic", "attributed", "temporal"}.issubset(query_types):
+        status = "FAIL (Missing a required query shape)"
     
     print("\n## EVALUATION SET VALIDATION")
     print("-" * 25)
@@ -158,6 +171,7 @@ def validate_queries(queries_filepath, corpus, valid_ids):
     print(f"Duplicates: {duplicates}")
     print(f"Zero-overlap queries: {zero_overlap_count}")
     print(f"Required zero-overlap queries: >= 8")
+    print(f"Query types: {', '.join(sorted(t for t in query_types if t))}")
     print(f"Status: {status}")
 
 

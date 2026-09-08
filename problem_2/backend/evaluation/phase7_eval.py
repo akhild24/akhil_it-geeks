@@ -103,7 +103,7 @@ for q_item in no_match_queries:
 
 print(f"No match queries: {len(no_match_queries)}")
 print(f"False Positive Rate (returns results when shouldn't): {fpr}/{len(no_match_queries)} ({(fpr/len(no_match_queries)*100):.1f}%)")
-print("NOTE: Threshold intentionally omitted in Phase 5 due to RRF score overlap.")
+print("NOTE: Production retrieval applies the Phase 9 confidence threshold; these metrics include that behavior.")
 
 print("\n--- PERFORMANCE ---")
 t0 = time.time()

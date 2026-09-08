@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from collections import Counter
 
-ROOT = r"c:\Users\ASUS\OneDrive\Desktop\akhil"
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 BACKEND = os.path.join(ROOT, "backend")
 DATA = os.path.join(ROOT, "data")
 FRONTEND = os.path.join(ROOT, "frontend")

@@ -9,7 +9,13 @@ class EmbeddingIndexer:
         The fallback model is used to avoid environment OOM/download timeout issues.
         """
         self.model_name = model_name
-        self.model = SentenceTransformer(model_name)
+        # Prefer an already cached model. This keeps normal API requests from
+        # making a metadata call to Hugging Face and still allows first-time
+        # setup to download the model when it is genuinely absent.
+        try:
+            self.model = SentenceTransformer(model_name, local_files_only=True)
+        except OSError:
+            self.model = SentenceTransformer(model_name)
         
     def encode_documents(self, documents: List[str]) -> np.ndarray:
         """

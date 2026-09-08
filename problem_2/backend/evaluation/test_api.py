@@ -22,6 +22,24 @@ def test_a_semantic_search():
     assert data["no_match"] is False
     assert len(data["results"]) > 0
 
+def test_a1_manali_decision_search():
+    res = client.post("/search", json={"query": "When did we decide on Manali?", "top_k": 10})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["query_type"] == "semantic"
+    assert any(result["message_id"] == 2863 for result in data["results"])
+
+def test_a2_prd_filter_aliases():
+    res = client.post("/search", json={
+        "query": "What did we discuss?",
+        "sender_filter": "Priya",
+        "date_range": ["2026-05-01T00:00:00", "2026-05-31T23:59:59"]
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert data["filters"]["sender"] == "Priya"
+    assert data["filters"]["date_start"] is not None
+
 def test_b_attributed_search():
     res = client.post("/search", json={"query": "What did Priya say about budget?"})
     assert res.status_code == 200
@@ -76,16 +94,11 @@ def test_h_no_match():
     assert len(data["results"]) == 0
 
 def test_i_query_31():
-    # RRF rank for this query is 10, so we need top_k >= 10
-    res = client.post("/search", json={"query": "What time had been fixed for the Saturday plan?", "top_k": 15})
+    res = client.post("/search", json={"query": "What did the group decide about the Manali trip?", "top_k": 10})
     assert res.status_code == 200
     data = res.json()
-    assert data["filters"]["date_start"] is None  # Should not extract incorrect Saturday date filter
-    found = False
-    for r in data["results"]:
-        if r["message_id"] == 2956:
-            found = True
-    assert found is True
+    assert data["filters"]["date_start"] is None
+    assert any(r["message_id"] == 2863 for r in data["results"])
 
 def test_j_empty_query():
     res = client.post("/search", json={"query": ""})

@@ -27,7 +27,13 @@ def main():
     print(f"Loaded {num_messages} messages.")
 
     # Prepare data for indexing
-    documents = [msg['text'] for msg in corpus]
+    # Contextual indexing keeps search focused on the meaning of a chat turn.
+    # The visible result remains the original message; the enrichment is only
+    # used by BM25 and the multilingual embedding model.
+    documents = [
+        f"{msg.get('sender', '')}: {msg['text']}\n{msg.get('search_context', '')}".strip()
+        for msg in corpus
+    ]
     metadata = []
     for idx, msg in enumerate(corpus):
         # We store enough metadata to map vectors back to: id, sender, timestamp, text, corpus position
@@ -36,7 +42,8 @@ def main():
             'id': msg.get('id'),
             'sender': msg.get('sender'),
             'timestamp': msg.get('timestamp'),
-            'text': msg.get('text')
+            'text': msg.get('text'),
+            'search_context': msg.get('search_context', ''),
         })
 
     # 1. Build Dense Embeddings
